@@ -65,16 +65,10 @@ void loop() {
   int ydata = (axisMeasures[3] >> 4) + (axisMeasures[4] << 4) + (axisMeasures[5] << 12);
   int zdata = (axisMeasures[6] >> 4) + (axisMeasures[7] << 4) + (axisMeasures[8] << 12);
   
-  // Apply two complement
-  if (xdata >= 0x80000) {
-    xdata = ~xdata + 1;
-  }
-  if (ydata >= 0x80000) {
-    ydata = ~ydata + 1;
-  }
-  if (zdata >= 0x80000) {
-    zdata = ~zdata + 1;
-  }
+  // extend the sign bit from bit 19 to bit 31
+  xdata = (xdata<<12)>>12;
+  ydata = (ydata<<12)>>12;
+  zdata = (zdata<<12)>>12;
 
   // Print axis
   Serial.print("X=");
@@ -124,9 +118,11 @@ unsigned int readRegistry(byte thisRegister) {
 void readMultipleData(int *addresses, int dataSize, int *readedData) {
   digitalWrite(CHIP_SELECT_PIN, LOW);
   for(int i = 0; i < dataSize; i = i + 1) {
+	digitalWrite(CHIP_SELECT_PIN, LOW);  
     byte dataToSend = (addresses[i] << 1) | READ_BYTE;
     SPI.transfer(dataToSend);
     readedData[i] = SPI.transfer(0x00);
+	digitalWrite(CHIP_SELECT_PIN, HIGH);
   }
-  digitalWrite(CHIP_SELECT_PIN, HIGH);
+  
 }
